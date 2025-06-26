@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ruleta Controlada</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+      /* 🎨 Fondo azul */
+      background-color: #007bff;
+    }
+    #container {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    #resultado {
+      font-size: 64px;
+      font-weight: bold;
+      color: #c00;
+      min-width: 120px;
+      text-align: center;
+    }
+    canvas {
+      border: 2px solid #444;
+    }
+    #spin {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <canvas id="canvas" width="500" height="500"></canvas>
+    <div id="resultado">---</div>
+  </div>
+  <button id="spin">Girar</button>
+
+  <script>
+    const options = Array.from({ length: 100 }, (_, i) => (i + 1).toString());
+    const fijo = "15";
+    let contadorGiros = 0;
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const resultadoEl = document.getElementById('resultado');
+    const outsideRadius = 200, textRadius = 160, insideRadius = 125;
+    const arc = Math.PI * 2 / options.length;
+    let startAngle = 0;
+
+    function drawWheel() {
+      ctx.clearRect(0, 0, 500, 500);
+
+      options.forEach((opt, i) => {
+        const angle = startAngle + i * arc;
+        ctx.fillStyle = getColor(i);
+        ctx.beginPath();
+        ctx.arc(250, 250, outsideRadius, angle, angle + arc);
+        ctx.arc(250, 250, insideRadius, angle + arc, angle, true);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.save();
+        ctx.translate(
+          250 + Math.cos(angle + arc / 2) * textRadius,
+          250 + Math.sin(angle + arc / 2) * textRadius
+        );
+        ctx.rotate(angle + arc / 2 + Math.PI / 2);
+        ctx.fillStyle = '#000';
+        ctx.font = "7px sans-serif"; // 👈 Tamaño más pequeño
+        ctx.fillText(opt, -ctx.measureText(opt).width / 2, 0);
+        ctx.restore();
+      });
+
+      // Flecha apuntando hacia la ruleta (desde abajo)
+      ctx.fillStyle = 'red';
+      ctx.beginPath();
+      ctx.moveTo(250, 450);  // punta
+      ctx.lineTo(240, 470);  // izquierda
+      ctx.lineTo(260, 470);  // derecha
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function getColor(i) {
+      const freq = Math.PI * 2 / options.length;
+      const r = Math.sin(freq * i + 0) * 127 + 128;
+      const g = Math.sin(freq * i + 2) * 127 + 128;
+      const b = Math.sin(freq * i + 4) * 127 + 128;
+      return `rgb(${r},${g},${b})`;
+    }
+
+    function spin() {
+      resultadoEl.textContent = "---";
+      contadorGiros++;
+
+      let objetivo;
+
+      if (contadorGiros % 4 === 0) {
+        objetivo = fijo;
+      } else {
+        const posibles = options.filter(o => o !== fijo);
+        objetivo = posibles[Math.floor(Math.random() * posibles.length)];
+      }
+
+      const index = options.indexOf(objetivo);
+      const stopAngle = (Math.PI / 2) - (index * arc) - arc / 2;
+      const vueltas = 8;
+      const totalRotation = vueltas * 2 * Math.PI + stopAngle;
+      const duration = 4000;
+      const startTime = performance.now();
+
+      function animate(time) {
+        const elapsed = time - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        const eased = easeOut(progress);
+        startAngle = totalRotation * eased;
+        drawWheel();
+
+        if (progress < 1) {
+          requestAnimationFrame(animate);
+        } else {
+          resultadoEl.textContent = objetivo;
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function easeOut(t) {
+      return (--t) * t * t + 1;
+    }
+
+    document.getElementById('spin').addEventListener('click', spin);
+    drawWheel();
+  </script>
+</body>
+</html>
