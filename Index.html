@@ -43,7 +43,7 @@
 
   <script>
     const options = Array.from({ length: 100 }, (_, i) => (i + 1).toString());
-    const fijo = "15";
+    const fijo = "1";
     let contadorGiros = 0;
 
     const canvas = document.getElementById('canvas');
@@ -101,7 +101,7 @@
 
       let objetivo;
 
-      if (contadorGiros % 4 === 0) {
+      if (contadorGiros % 5 === 0) {
         objetivo = fijo;
       } else {
         const posibles = options.filter(o => o !== fijo);
